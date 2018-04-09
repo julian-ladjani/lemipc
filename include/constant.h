@@ -23,7 +23,6 @@ typedef enum lemipc_controller_state_e {
 typedef enum lemipc_player_state_e {
 	LEMIPC_PLAYER_STOP,
 	LEMIPC_PLAYER_RUNNING,
-	LEMIPC_PLAYER_PLAY,
 } lemipc_player_state_t;
 
 #define lemipc_ftok_id (13)

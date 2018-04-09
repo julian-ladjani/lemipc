@@ -25,12 +25,17 @@ int get_next_player(lemipc_shared_struct_t *shared_struct, int offset)
 	return (0);
 }
 
-static void wait_player(lemipc_shared_struct_t *shared_struct, int player)
+static void wait_player(lemipc_local_struct_t *local_struct, int player)
 {
-	shared_struct->players[player].player_state = LEMIPC_PLAYER_PLAY;
-	while (shared_struct->players[player].player_state ==
-		LEMIPC_PLAYER_PLAY)
+	lemipc_shared_struct_t *shared_struct = local_struct->shared_struct;
+	lemipc_player_t *player_struct =
+		&(shared_struct->players[local_struct->player]);
+
+	semctl(local_struct->sem_id, 0, SETVAL, player);
+	while (semctl(local_struct->sem_id, 0, GETVAL, 0) != max_players &&
+		player_struct->player_state == LEMIPC_PLAYER_RUNNING) {
 		usleep(10);
+	}
 }
 
 void *controller_loop(void *ptr)
@@ -45,11 +50,12 @@ void *controller_loop(void *ptr)
 		display_players(local_struct->shared_struct);
 		current_player = get_next_player(local_struct->shared_struct,
 			current_player + 1);
-		wait_player(local_struct->shared_struct, current_player);
+		wait_player(local_struct, current_player);
+		usleep(5000);
 	}
 	shmctl(local_struct->shm_id, IPC_RMID, NULL);
 	msgctl(local_struct->msg_id, IPC_RMID, NULL);
-	semctl(local_struct->sem_id, IPC_RMID, NULL);
+	semctl(local_struct->sem_id, 0, IPC_RMID);
 	clean_display();
 	local_struct->controller_state = LEMIPC_CONTROLLER_STOP;
 	return (NULL);

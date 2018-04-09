@@ -42,6 +42,7 @@ int initialize_controller(lemipc_local_struct_t *local_struct)
 		local_struct->shm_id, NULL, SHM_R | SHM_W);
 	if (local_struct->shared_struct == NULL)
 		return (84);
+	semctl(local_struct->sem_id, 0, SETVAL, max_players);
 	initialise_shared_struct(local_struct);
 	if (pthread_create(&tid, NULL, controller_loop, local_struct) != 0)
 		return (84);

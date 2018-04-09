@@ -6,6 +6,7 @@
 */
 
 #include <stdlib.h>
+#include <sys/sem.h>
 #include "struct.h"
 
 int rand_a_b(int a, int b)
@@ -19,21 +20,24 @@ static void wait_turn(lemipc_local_struct_t *local_struct)
 	lemipc_player_t *player =
 		&(shared_struct->players[local_struct->player]);
 
-	while (player->player_state == LEMIPC_PLAYER_RUNNING)
+	while (semctl(local_struct->sem_id, 0, GETVAL, 0) !=
+		local_struct->player &&
+		player->player_state == LEMIPC_PLAYER_RUNNING) {
 		usleep(10);
+	}
 }
 
 static void ai_move(lemipc_local_struct_t *local_struct, int dir)
 {
 	switch (dir) {
-		case 1:
+		case 0:
 			if (local_struct->player_x == 0)
-				ai_move(local_struct, 2);
+				ai_move(local_struct, 1);
 			local_struct->player_x--;
 			break;
-		case 2:
-			if (local_struct->player_x >= map_width)
-				ai_move(local_struct, 1);
+		case 1:
+			if (local_struct->player_x == (map_lengh - 1))
+				ai_move(local_struct, 0);
 			local_struct->player_x++;
 			break;
 		default:
@@ -63,12 +67,8 @@ void ai_loop(lemipc_local_struct_t *local_struct)
 
 	while (player->player_state != LEMIPC_PLAYER_STOP) {
 		wait_turn(local_struct);
-		if (player->player_state == LEMIPC_PLAYER_STOP)
-			break;
 		ai_turn(local_struct);
-		if (player->player_state == LEMIPC_PLAYER_STOP)
-			break;
-		player->player_state = LEMIPC_PLAYER_RUNNING;
+		semctl(local_struct->sem_id, 0, SETVAL, max_players);
 	}
 	shared_struct->map[local_struct->player_y][local_struct->player_x]
 		= ' ';

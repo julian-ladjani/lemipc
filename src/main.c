@@ -8,6 +8,7 @@
 #include <sys/shm.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <time.h>
 #include "fonction.h"
 
 static lemipc_local_struct_t local_struct;
@@ -33,8 +34,6 @@ static void wait_controller()
 void sig_handler(int signo)
 {
 	if (signo == SIGINT) {
-		if (local_struct.shared_struct == NULL)
-			exit (84);
 		local_struct.shared_struct->players[local_struct.player]
 			.player_state = LEMIPC_PLAYER_STOP;
 	}
@@ -44,6 +43,7 @@ int main(int ac, char **av)
 {
 	if (ac != 3 || atoi(av[2]) < 1)
 		return (84);
+	srand(time(NULL));
 	if (signal(SIGINT, sig_handler) == SIG_ERR)
 		return (84);
 	local_struct.ftok_key = ftok(av[1], lemipc_ftok_id);
