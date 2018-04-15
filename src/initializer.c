@@ -18,11 +18,8 @@ static void initialise_shared_struct(lemipc_local_struct_t *local_struct)
 
 	memset(shared_struct->players, 0,
 		max_players * sizeof(lemipc_player_t));
-	for (int i = 0; i < map_width; i++) {
-		for (int j = 0; j < map_lengh; j++)
-			shared_struct->map[i][j] = ' ';
-		shared_struct->map[i][map_lengh] = '\0';
-	}
+	memset(shared_struct->teams, 0,
+		max_players * sizeof(lemipc_team_t));
 	shared_struct->nb_player = 1;
 }
 
@@ -67,16 +64,13 @@ static void initialize_player(lemipc_local_struct_t *local_struct,
 	shared_struct->players[player].player_name =
 		lemipc_player_names[player];
 	shared_struct->players[player].player_state = LEMIPC_PLAYER_RUNNING;
-	shared_struct->players[player].team_id = team_id;
-	local_struct->player_x = rand_a_b(0, map_lengh - 1);
-	local_struct->player_y = rand_a_b(0, map_width - 1);
-	while (shared_struct->
-		map[local_struct->player_y][local_struct->player_x] != ' ') {
-		local_struct->player_x = rand_a_b(0, map_lengh - 1);
-		local_struct->player_y = rand_a_b(0, map_width - 1);
-	}
-	shared_struct->map[local_struct->player_y][local_struct->player_x]
-		= shared_struct->players[player].player_name;
+	shared_struct->players[player].team = get_team_by_id(team_id,
+		shared_struct->teams);
+	shared_struct->players[player].team->nb_player++;
+	shared_struct->players[player].team_id =
+		shared_struct->players[player].team->team_id;
+	shared_struct->players[player].pos.x = rand_a_b(0, map_lengh - 1);
+	shared_struct->players[player].pos.y = rand_a_b(0, map_width - 1);
 }
 
 int initialize_ai(lemipc_local_struct_t *local_struct)

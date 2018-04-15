@@ -15,10 +15,23 @@ typedef enum lemipc_type_e {
 	LEMIPC_CONTROLLER
 } lemipc_type_t;
 
+typedef enum lemipc_dir_e {
+	LEMIPC_NONE,
+	LEMIPC_UP,
+	LEMIPC_DOWN,
+	LEMIPC_LEFT,
+	LEMIPC_RIGHT
+} lemipc_dir_t;
+
 typedef enum lemipc_controller_state_e {
 	LEMIPC_CONTROLLER_STOP,
 	LEMIPC_CONTROLLER_RUNNING,
 } lemipc_controller_state_t;
+
+typedef enum lemipc_team_state_e {
+	LEMIPC_TEAM_UNDEFINED,
+	LEMIPC_TEAM_DEFINED,
+} lemipc_team_state_t;
 
 typedef enum lemipc_player_state_e {
 	LEMIPC_PLAYER_STOP,

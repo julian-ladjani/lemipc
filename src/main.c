@@ -34,6 +34,10 @@ static void wait_controller()
 void sig_handler(int signo)
 {
 	if (signo == SIGINT) {
+		if (local_struct.shared_struct->players[local_struct.player]
+			.player_state == LEMIPC_PLAYER_STOP &&
+			local_struct.type == LEMIPC_CONTROLLER)
+			stop_all_players(local_struct.shared_struct);
 		local_struct.shared_struct->players[local_struct.player]
 			.player_state = LEMIPC_PLAYER_STOP;
 	}
@@ -49,7 +53,6 @@ int main(int ac, char **av)
 	local_struct.ftok_key = ftok(av[1], lemipc_ftok_id);
 	if (local_struct.ftok_key == -1)
 		return (84);
-	local_struct.path = av[1];
 	local_struct.team_number = (unsigned int) atoi(av[2]);
 	get_shared_memory();
 	if (local_struct.type == LEMIPC_CONTROLLER)

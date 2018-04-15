@@ -8,11 +8,7 @@
 #include <stdlib.h>
 #include <sys/sem.h>
 #include "struct.h"
-
-int rand_a_b(int a, int b)
-{
-	return (rand() % (b - a) + a);
-}
+#include "fonction.h"
 
 static void wait_turn(lemipc_local_struct_t *local_struct)
 {
@@ -27,36 +23,38 @@ static void wait_turn(lemipc_local_struct_t *local_struct)
 	}
 }
 
-static void ai_move(lemipc_local_struct_t *local_struct, int dir)
-{
-	switch (dir) {
-		case 0:
-			if (local_struct->player_x == 0)
-				ai_move(local_struct, 1);
-			local_struct->player_x--;
-			break;
-		case 1:
-			if (local_struct->player_x == (map_lengh - 1))
-				ai_move(local_struct, 0);
-			local_struct->player_x++;
-			break;
-		default:
-			return;
-	}
-}
-
 static void ai_turn(lemipc_local_struct_t *local_struct)
 {
 	lemipc_shared_struct_t *shared_struct = local_struct->shared_struct;
 	lemipc_player_t *player =
 		&(shared_struct->players[local_struct->player]);
-	int dir = rand_a_b(0, 2);
 
-	shared_struct->map[local_struct->player_y][local_struct->player_x]
-		= ' ';
-	ai_move(local_struct, dir);
-	shared_struct->map[local_struct->player_y][local_struct->player_x]
-		= player->player_name;
+	ai_algo(player, shared_struct->players);
+}
+
+void increase_team_kill(lemipc_team_t *team)
+{
+	team->nb_kill++;
+}
+
+void ai_in_loop(lemipc_local_struct_t *local_struct)
+{
+	lemipc_shared_struct_t *shared_struct = local_struct->shared_struct;
+	lemipc_player_t *player =
+		&(shared_struct->players[local_struct->player]);
+	int dead = 0;
+
+	wait_turn(local_struct);
+	dead = check_dead_first_player(shared_struct->players,
+		player);
+	if (dead > -1) {
+		increase_team_kill(get_team_by_id(dead,
+			shared_struct->teams));
+		player->player_state = LEMIPC_PLAYER_STOP;
+	}
+	else
+		ai_turn(local_struct);
+	semctl(local_struct->sem_id, 0, SETVAL, max_players);
 }
 
 void ai_loop(lemipc_local_struct_t *local_struct)
@@ -66,11 +64,12 @@ void ai_loop(lemipc_local_struct_t *local_struct)
 		&(shared_struct->players[local_struct->player]);
 
 	while (player->player_state != LEMIPC_PLAYER_STOP) {
-		wait_turn(local_struct);
-		ai_turn(local_struct);
-		semctl(local_struct->sem_id, 0, SETVAL, max_players);
+		ai_in_loop(local_struct);
 	}
-	shared_struct->map[local_struct->player_y][local_struct->player_x]
-		= ' ';
+	player->team->nb_player--;
+	if (player->team->nb_player == 0) {
+		player->team->nb_kill = 0;
+		player->team->team_state = LEMIPC_TEAM_UNDEFINED;
+	}
 	shared_struct->nb_player--;
 }

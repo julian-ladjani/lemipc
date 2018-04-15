@@ -12,6 +12,13 @@
 #include "struct.h"
 #include "fonction.h"
 
+void stop_all_players(lemipc_shared_struct_t *shared_struct)
+{
+	for (int i = 0; i < max_players; i++) {
+		shared_struct->players[i].player_state = LEMIPC_PLAYER_STOP;
+	}
+}
+
 int get_next_player(lemipc_shared_struct_t *shared_struct, int offset)
 {
 	if (offset >= max_players)
